@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generador de Códigos (7 dígitos)</title>
+  <style>
+    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+    body{margin:0;background:#0f172a;color:#e2e8f0}
+    header{padding:16px 24px;background:#111827;border-bottom:1px solid #1f2937}
+    h1{font-size:20px;margin:0}
+    main{max-width:1100px;margin:0 auto;padding:24px}
+    .card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:20px;margin-bottom:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    label{display:block;font-size:13px;color:#93c5fd;margin-bottom:6px}
+    select,input,button,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e2e8f0}
+    select:disabled,input:disabled{opacity:.6}
+    .code{font-variant-numeric:tabular-nums;font-weight:700;font-size:32px;letter-spacing:2px}
+    .muted{color:#94a3b8;font-size:13px}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#0b1220;border:1px solid #334155;font-size:12px;margin-right:6px}
+    .stack{display:flex;gap:10px;flex-wrap:wrap}
+    .footer{margin-top:6px;font-size:12px;color:#94a3b8}
+    .warning{background:#24120f;border:1px solid #7f1d1d;color:#fecaca;padding:12px;border-radius:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Generador de Códigos de Producto — 7 dígitos</h1>
+  </header>
+  <main>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label>1º dígito — Familia</label>
+          <select id="fam" onchange="onFamilyChange()">
+            <option value="">Seleccione…</option>
+            <option value="1">1 — Materia Prima</option>
+            <option value="2">2 — Semielaborado</option>
+            <option value="3">3 — Pieza</option>
+            <option value="4">4 — Normales</option>
+            <option value="5">5 — Producto Terminado</option>
+          </select>
+        </div>
+        <div>
+          <label>Descripción acumulada</label>
+          <textarea id="desc" rows="3" readonly></textarea>
+        </div>
+      </div>
+
+      <div id="steps" class="row" style="margin-top:12px"></div>
+
+      <div style="margin-top:18px" class="row">
+        <div>
+          <label>Código generado (7 dígitos)</label>
+          <div class="code" id="code">— — — — — — —</div>
+          <div class="stack footer">
+            <span class="pill" id="d1">_</span>
+            <span class="pill" id="d2">_</span>
+            <span class="pill" id="d3">_</span>
+            <span class="pill" id="d4">_</span>
+            <span class="pill" id="d5">_</span>
+            <span class="pill" id="d6">_</span>
+            <span class="pill" id="d7">_</span>
+          </div>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button onclick="copyCode()">Copiar código</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="muted">Notas</p>
+      <ul class="muted">
+        <li>Familia 2 (Semielaborado) y 4 (Normales) implementadas.</li>
+        <li>Familia 1 (Materia Prima) y las demás pueden activarse igual con tus tablas definitivas.</li>
+      </ul>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    let digits = ['','','','','','',''];
+
+    function setDigitsDisplay(digs){
+      const [d1,d2,d3,d4,d5,d6,d7] = digs.map(x=>x||'_');
+      $('d1').textContent=d1; $('d2').textContent=d2; $('d3').textContent=d3;
+      $('d4').textContent=d4; $('d5').textContent=d5; $('d6').textContent=d6; $('d7').textContent=d7;
+      $('code').textContent = digs.some(x=>!x)? '— — — — — — —' : digs.join('');
+    }
+    function appendDesc(txt){
+      const cur=$('desc').value.trim();
+      $('desc').value = cur ? (cur+' / '+txt) : txt;
+    }
+    function resetDesc(){ $('desc').value=''; }
+    function clearSteps(){ $('steps').innerHTML=''; }
+    function addStep({id,label,options,onchange}){
+      const wrap=document.createElement('div');
+      const lab=document.createElement('label');lab.textContent=label;
+      const sel=document.createElement('select');sel.id=id;
+      const blank=document.createElement('option');blank.value='';blank.textContent='Seleccione…';sel.appendChild(blank);
+      options.forEach(o=>{
+        const op=document.createElement('option');
+        op.value=o.value; op.text=o.text; op.textContent=o.text; op.dataset.desc=o.desc||o.text;
+        sel.appendChild(op);
+      });
+      sel.onchange=onchange; wrap.appendChild(lab); wrap.appendChild(sel); $('steps').appendChild(wrap);
+    }
+    function copyCode(){
+      const txt=$('code').textContent.replaceAll(' ','');
+      if(/^\d{7}$/.test(txt)){ navigator.clipboard.writeText(txt); alert('Código copiado: '+txt); }
+      else { alert('El código aún no está completo.'); }
+    }
+
+    // ===== F2: Semielaborado (tu definición) =====
+    const F2={
+      name:'Semielaborado',
+      build:function(){
+        resetDesc(); digits=['2','','','','','','']; setDigitsDisplay(digits);
+        addStep({id:'f2_d2',label:'2º dígito — Material',options:[
+          {value:'1',text:'1 — Metales'},{value:'2',text:'2 — Polímeros'}
+        ],onchange:(e)=>{
+          ['f2_d3','f2_d45','f2_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+          digits[1]=e.target.value; digits[2]=digits[3]=digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+          resetDesc(); appendDesc('Semielaborado'); appendDesc(e.target.value==='1'?'Metales':'Polímeros');
+          if(!e.target.value) return; F2.step3(e.target.value);
+        }});
+      },
+      step3:function(material){
+        const options = material==='1'
+          ? [{value:'1',text:'1 — Acero'},{value:'2',text:'2 — Aluminio'}]
+          : [{value:'1',text:'1 — Nylon'},{value:'2',text:'2 — PVC'}];
+        addStep({id:'f2_d3',label:'3º dígito — Tipo de material',options,
+          onchange:(e)=>{
+            ['f2_d45','f2_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+            digits[2]=e.target.value; digits[3]=digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            const raw=e.target.selectedOptions[0]?.textContent; if(raw){ const parts=raw.split('—'); appendDesc(parts.length>1? parts.slice(1).join('—').trim(): raw.trim()); }
+            if(!e.target.value) return; F2.step45(material, e.target.value);
+          }
+        });
+      },
+      step45:function(material,tipo){
+        const map = material==='1'
+          ? (tipo==='1' ? [['01','SAE 1010'],['02','SAE 1020'],['03','SAE 1045']]
+                         : [['01','AISI 12'],['02','AISI 13'],['03','AISI 132']])
+          : (tipo==='1' ? [['01','PA6'],['02','PA12'],['03','PA66']]
+                        : [['01','K60'],['02','K65'],['03','K67']]);
+        const opts = map.map(([v,txt])=>({value:v,text:`${v} — ${txt}`,desc:txt}));
+        addStep({id:'f2_d45',label:'4º–5º dígitos — Especificaciones técnicas',options:opts,
+          onchange:(e)=>{
+            const v=e.target.value; digits[3]=v[0]||''; digits[4]=v[1]||''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            const txt=e.target.selectedOptions[0]?.dataset.desc; if(txt) appendDesc(txt);
+            if(!e.target.value) return; F2.step67();
+          }
+        });
+      },
+      step67:function(){
+        const opts=[{value:'01',text:'01 — En bruto',desc:'En bruto'},{value:'02',text:'02 — Tratamiento aplicado',desc:'Tratamiento aplicado'}];
+        addStep({id:'f2_d67',label:'6º–7º dígitos — Acabado',options:opts,
+          onchange:(e)=>{ const v=e.target.value; digits[5]=v[0]||''; digits[6]=v[1]||''; setDigitsDisplay(digits); appendDesc(e.target.selectedOptions[0]?.dataset.desc); }
+        });
+      }
+    };
+
+    // ===== F4: Normales (tu definición) =====
+    const F4={
+      name:'Normales',
+      build:function(){
+        resetDesc(); digits=['4','','','','','','']; setDigitsDisplay(digits);
+        appendDesc('Normales');
+        // 2º Propósito principal
+        addStep({id:'f4_d2',label:'2º dígito — Propósito principal',options:[
+          {value:'1',text:'1 — Fijación'},
+          {value:'2',text:'2 — Sellado'},
+          {value:'3',text:'3 — Transmisión de potencia y soporte'}
+        ],onchange:(e)=>{
+          ['f4_d3','f4_d4','f4_d5','f4_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+          digits[1]=e.target.value; digits[2]=digits[3]=digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+          const map={1:'Fijación',2:'Sellado',3:'Transmisión de potencia y soporte'}; if(map[e.target.value]) appendDesc(map[e.target.value]);
+          if(!e.target.value) return; F4.step3(e.target.value);
+        }});
+      },
+      step3:function(prop){
+        // 3º Pieza específica
+        let options=[];
+        if(prop==='1'){ options=[{value:'1',text:'1 — Tornillo'},{value:'2',text:'2 — Rosca'}]; }
+        else if(prop==='2'){ options=[{value:'1',text:"1 — Junta"},{value:'2',text:'2 — Retén'}]; }
+        else { options=[{value:'1',text:'1 — Rodamiento'},{value:'2',text:'2 — Buje'}]; }
+        addStep({id:'f4_d3',label:'3º dígito — Pieza específica',options,
+          onchange:(e)=>{
+            ['f4_d4','f4_d5','f4_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+            digits[2]=e.target.value; digits[3]=digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            const raw=e.target.selectedOptions[0]?.textContent; if(raw){ const parts=raw.split('—'); appendDesc(parts.length>1? parts.slice(1).join('—').trim(): raw.trim()); }
+            if(!e.target.value) return; F4.step4(prop, e.target.value);
+          }
+        });
+      },
+      step4:function(prop,pieza){
+        // 4º (y a veces 4º–5º juntos)
+        if(prop==='1'){ // Fijación -> Cabeza
+          addStep({id:'f4_d4',label:'4º dígito — Cabeza',options:[
+            {value:'1',text:'1 — Plana'},{value:'2',text:'2 — Hexagonal'}
+          ],onchange:(e)=>{
+            ['f4_d5','f4_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+            digits[3]=e.target.value; digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            appendDesc(e.target.selectedOptions[0]?.dataset.desc||e.target.selectedOptions[0]?.textContent);
+            if(!e.target.value) return; F4.step5(prop,pieza);
+          }});
+        } else if(prop==='2' && pieza==='1'){ // Junta -> Tipo de junta
+          addStep({id:'f4_d4',label:'4º dígito — Tipo de junta',options:[
+            {value:'1',text:"1 — O'ring",desc:"O'ring"},{value:'2',text:'2 — X-ring'}
+          ],onchange:(e)=>{
+            ['f4_d5','f4_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+            digits[3]=e.target.value; digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            appendDesc(e.target.selectedOptions[0]?.dataset.desc||e.target.selectedOptions[0]?.textContent);
+            if(!e.target.value) return; F4.step5(prop,pieza);
+          }});
+        } else if(prop==='2' && pieza==='2'){ // Retén -> 4º–5º Cantidad de labios
+          const opts=[{value:'01',text:'01 — Simple labio',desc:'Simple labio'},{value:'02',text:'02 — Doble labio',desc:'Doble labio'}];
+          addStep({id:'f4_d45',label:'4º–5º dígitos — Cantidad de labios',options:opts,
+            onchange:(e)=>{
+              const v=e.target.value; digits[3]=v[0]||''; digits[4]=v[1]||''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+              appendDesc(e.target.selectedOptions[0]?.dataset.desc);
+              if(!e.target.value) return; F4.step67(prop,pieza);
+            }
+          });
+        } else if(prop==='3' && pieza==='1'){ // Rodamiento -> Estructura
+          addStep({id:'f4_d4',label:'4º dígito — Estructura',options:[
+            {value:'1',text:'1 — Rodamiento rígido de bolas',desc:'Rodamiento rígido de bolas'},
+            {value:'2',text:'2 — Rodamiento rígido de cilindros',desc:'Rodamiento rígido de cilindros'}
+          ],onchange:(e)=>{
+            ['f4_d5','f4_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+            digits[3]=e.target.value; digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            appendDesc(e.target.selectedOptions[0]?.dataset.desc);
+            if(!e.target.value) return; F4.step5(prop,pieza);
+          }});
+        } else if(prop==='3' && pieza==='2'){ // Buje -> Tipo de unión
+          addStep({id:'f4_d4',label:'4º dígito — Tipo de unión',options:[
+            {value:'1',text:'1 — Rosca Hembra',desc:'Rosca Hembra'},
+            {value:'2',text:'2 — Rosca Macho',desc:'Rosca Macho'}
+          ],onchange:(e)=>{
+            ['f4_d5','f4_d67'].forEach(id=>{const el=$(id); if(el) el.parentElement.remove();});
+            digits[3]=e.target.value; digits[4]=''; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            appendDesc(e.target.selectedOptions[0]?.dataset.desc);
+            if(!e.target.value) return; F4.step5(prop,pieza);
+          }});
+        }
+      },
+      step5:function(prop,pieza){
+        if(prop==='1'){ // Fijación -> Norma
+          addStep({id:'f4_d5',label:'5º dígito — Norma',options:[{value:'1',text:'1 — ISO'},{value:'2',text:'2 — DIN'}],
+            onchange:(e)=>{
+              const el=$('f4_d67'); if(el) el.parentElement.remove();
+              digits[4]=e.target.value; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+              appendDesc(e.target.selectedOptions[0]?.dataset.desc||e.target.selectedOptions[0]?.textContent);
+              if(!e.target.value) return; F4.step67(prop,pieza);
+            }
+          });
+        } else if(prop==='2' && pieza==='1'){ // Junta -> Forma
+          addStep({id:'f4_d5',label:'5º dígito — Forma',options:[{value:'1',text:'1 — Circular'},{value:'2',text:'2 — X'}],
+            onchange:(e)=>{
+              const el=$('f4_d67'); if(el) el.parentElement.remove();
+              digits[4]=e.target.value; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+              appendDesc(e.target.selectedOptions[0]?.dataset.desc||e.target.selectedOptions[0]?.textContent);
+              if(!e.target.value) return; F4.step67(prop,pieza);
+            }
+          });
+        } else if(prop==='3' && pieza==='1'){ // Rodamiento -> Norma
+          addStep({id:'f4_d5',label:'5º dígito — Norma',options:[{value:'1',text:'1 — ISO'},{value:'2',text:'2 — DIN'}],
+            onchange:(e)=>{
+              const el=$('f4_d67'); if(el) el.parentElement.remove();
+              digits[4]=e.target.value; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+              appendDesc(e.target.selectedOptions[0]?.dataset.desc||e.target.selectedOptions[0]?.textContent);
+              if(!e.target.value) return; F4.step67(prop,pieza);
+            }
+          });
+        } else if(prop==='3' && pieza==='2'){ // Buje -> Sistema de medida
+          addStep({id:'f4_d5',label:'5º dígito — Sistema de medida',options:[
+            {value:'1',text:'1 — RH',desc:'RH'},
+            {value:'2',text:'2 — NPT',desc:'NPT'},
+            {value:'3',text:'3 — BSP',desc:'BSP'}
+          ],onchange:(e)=>{
+            const el=$('f4_d67'); if(el) el.parentElement.remove();
+            digits[4]=e.target.value; digits[5]=digits[6]=''; setDigitsDisplay(digits);
+            appendDesc(e.target.selectedOptions[0]?.dataset.desc);
+            if(!e.target.value) return; F4.step67(prop,pieza);
+          }});
+        }
+      },
+      step67:function(prop,pieza){
+        if(prop==='1'){ // Fijación -> 6º y 7º separados
+          addStep({id:'f4_d6',label:'6º dígito — Diámetro',options:[
+            {value:'1',text:'1 — M5',desc:'M5'},{value:'2',text:'2 — M8',desc:'M8'}
+          ],onchange:(e)=>{ digits[5]=e.target.value; digits[6]=''; setDigitsDisplay(digits); appendDesc(e.target.selectedOptions[0]?.dataset.desc); }});
+          addStep({id:'f4_d7',label:'7º dígito — Paso × Largo',options:[
+            {value:'1',text:'1 — 0.5 × 12 mm',desc:'0.5 × 12 mm'},{value:'2',text:'2 — 0.5 × 20 mm',desc:'0.5 × 20 mm'}
+          ],onchange:(e)=>{ digits[6]=e.target.value; setDigitsDisplay(digits); appendDesc(e.target.selectedOptions[0]?.dataset.desc); }});
+        } else if(prop==='2' && pieza==='1'){ // Junta -> 6º–7º juntos
+          const opts=[{value:'01',text:'01 — 1/4 plg',desc:'1/4 plg'},{value:'02',text:'02 — 1 plg',desc:'1 plg'},{value:'03',text:'03 — 1 1/2 plg',desc:'1 1/2 plg'}];
+          addStep({id:'f4_d67',label:'6º–7º dígitos — Diámetro',options:opts,
+            onchange:(e)=>{ const v=e.target.value; digits[5]=v[0]||''; digits[6]=v[1]||''; setDigitsDisplay(digits); appendDesc(e.target.selectedOptions[0]?.dataset.desc); }});
+        } else if(prop==='2' && pieza==='2'){ // Retén -> 6º–7º
+          const opts=[{value:'01',text:'01 — 5 mm',desc:'5 mm'},{value:'02',text:'02 — 10 mm',desc:'10 mm'},{value:'03',text:'03 — 15 mm',desc:'15 mm'}];
+          addStep({id:'f4_d67',label:'6º–7º dígitos — Diámetro',options:opts,
+            onchange:(e)=>{ const v=e.target.value; digits[5]=v[0]||''; digits[6]=v[1]||''; setDigitsDisplay(digits); appendDesc(e.target.selectedOptions[0]?.dataset.desc); }});
+        } else if(prop==='3' && pieza==='1'){ // Rodamiento -> específico
+          const opts=[{value:'01',text:'01 — 6204 2 RSL',desc:'6204 2 RSL'},{value:'02',text:'02 — 6203 2RSL',desc:'6203 2RSL'}];
+          addStep({id:'f4_d67',label:'6º–7º dígitos — Rodamiento específico',options:opts,
+            onchange:(e)=>{ const v=e.target.value; digits[5]=v[0]||''; digits[6]=v[1]||''; setDigitsDisplay(digits); appendDesc(e.target.selectedOptions[0]?.dataset.desc); }});
+        } else if(prop==='3' && pieza==='2'){ // Buje -> 6º–7º
+          const opts=[{value:'01',text:'01 — 1 1/2 plg',desc:'1 1/2 plg'},{value:'02',text:'02 — 2 plg',desc:'2 plg'}];
+          addStep({id:'f4_d67',label:'6º–7º dígitos — Diámetro',options:opts,
+            onchange:(e)=>{ const v=e.target.value; digits[5]=v[0]||''; digits[6]=v[1]||''; setDigitsDisplay(digits); appendDesc(e.target.selectedOptions[0]?.dataset.desc); }});
+        }
+      }
+    };
+
+    // Router
+    function onFamilyChange(){
+      clearSteps(); resetDesc();
+      const f=$('fam').value;
+      if(f==='2') F2.build();
+      else if(f==='4') F4.build();
+      else { digits=['','','','','','','']; setDigitsDisplay(digits); }
+    }
+
+    setDigitsDisplay(['','','','','','','']);
+  </script>
+</body>
+</html>
